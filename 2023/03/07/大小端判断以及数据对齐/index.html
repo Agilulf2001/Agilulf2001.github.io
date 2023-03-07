@@ -77,17 +77,19 @@
 
 
 
-<meta name="description" content="通用寄存器： %rsp是栈指针，指向栈顶位置。函数的调用或者返回是通过push与pop操作改变%rsp值，也就是移动栈指针这一操作来实现的。 %rbp是栈帧指针，用于标识当前栈帧的起始位置。也就是当前函数栈的基址。 %rax用于存储函数调用的返回结果，%eax也是用于存储函数调用返回的结果。它们的区别是%rax存储64位的结果，%eax存储32位的结果。%eax是%rax低位部分。 要注意，通用目">
+<meta name="description" content="用联合存放一个int型变量，将此变量读作char类型数组，或者用强制类型转换将int型指针转换为char指针，然后访问此char数组的低位与高位。  如图所示，判断此char数组的第一个元素是对应int型的第一个字节还是最后一个字节，从而判断机器是大端还是小端。继续厘清一下为什么通过这样的方式可以判断机器的大小端属性，在机器内存中分配数组，无论此机器是大端还是小端，数组都是顺着栈的方向向下生长的。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="x86-64通用目的寄存器简单介绍">
-<meta property="og:url" content="https://agilulf2001.github.io/2023/03/05/x86-64%E5%AF%84%E5%AD%98%E5%99%A8%E6%8C%87%E9%92%88/index.html">
+<meta property="og:title" content="大小端判断以及数据对齐">
+<meta property="og:url" content="https://agilulf2001.github.io/2023/03/07/%E5%A4%A7%E5%B0%8F%E7%AB%AF%E5%88%A4%E6%96%AD%E4%BB%A5%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%AF%B9%E9%BD%90/index.html">
 <meta property="og:site_name" content="AgiBlog">
-<meta property="og:description" content="通用寄存器： %rsp是栈指针，指向栈顶位置。函数的调用或者返回是通过push与pop操作改变%rsp值，也就是移动栈指针这一操作来实现的。 %rbp是栈帧指针，用于标识当前栈帧的起始位置。也就是当前函数栈的基址。 %rax用于存储函数调用的返回结果，%eax也是用于存储函数调用返回的结果。它们的区别是%rax存储64位的结果，%eax存储32位的结果。%eax是%rax低位部分。 要注意，通用目">
+<meta property="og:description" content="用联合存放一个int型变量，将此变量读作char类型数组，或者用强制类型转换将int型指针转换为char指针，然后访问此char数组的低位与高位。  如图所示，判断此char数组的第一个元素是对应int型的第一个字节还是最后一个字节，从而判断机器是大端还是小端。继续厘清一下为什么通过这样的方式可以判断机器的大小端属性，在机器内存中分配数组，无论此机器是大端还是小端，数组都是顺着栈的方向向下生长的。">
 <meta property="og:locale">
-<meta property="article:published_time" content="2023-03-05T15:16:23.000Z">
-<meta property="article:modified_time" content="2023-03-06T14:29:23.885Z">
+<meta property="og:image" content="https://agilulf2001.github.io/2023/03/07/%E5%A4%A7%E5%B0%8F%E7%AB%AF%E5%88%A4%E6%96%AD%E4%BB%A5%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%AF%B9%E9%BD%90/demo.png">
+<meta property="article:published_time" content="2023-03-07T00:32:22.000Z">
+<meta property="article:modified_time" content="2023-03-07T01:09:32.140Z">
 <meta property="article:author" content="Wang, Juncheng">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://agilulf2001.github.io/2023/03/07/%E5%A4%A7%E5%B0%8F%E7%AB%AF%E5%88%A4%E6%96%AD%E4%BB%A5%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%AF%B9%E9%BD%90/demo.png">
 
 
 
@@ -117,13 +119,13 @@
 
 
 
-  <link rel="canonical" href="https://agilulf2001.github.io/2023/03/05/x86-64寄存器指针/"/>
+  <link rel="canonical" href="https://agilulf2001.github.io/2023/03/07/大小端判断以及数据对齐/"/>
 
 
 
 
 
-  <title>x86-64通用目的寄存器简单介绍 | AgiBlog</title>
+  <title>大小端判断以及数据对齐 | AgiBlog</title>
   
 
 
@@ -230,7 +232,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://agilulf2001.github.io/2023/03/05/x86-64%E5%AF%84%E5%AD%98%E5%99%A8%E6%8C%87%E9%92%88/">
+    <link itemprop="mainEntityOfPage" href="https://agilulf2001.github.io/2023/03/07/%E5%A4%A7%E5%B0%8F%E7%AB%AF%E5%88%A4%E6%96%AD%E4%BB%A5%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%AF%B9%E9%BD%90/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="">
@@ -247,7 +249,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">x86-64通用目的寄存器简单介绍</h1>
+          <h1 class="post-title" itemprop="name headline">大小端判断以及数据对齐</h1>
         
 
         <div class="post-meta">
@@ -259,8 +261,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2023-03-05T23:16:23+08:00">
-                2023-03-05
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2023-03-07T08:32:22+08:00">
+                2023-03-07
               </time>
             
 
@@ -297,14 +299,11 @@
       
 
       
-        <p>通用寄存器：</p>
-<p>%rsp是栈指针，指向栈顶位置。函数的调用或者返回是通过push与pop操作改变%rsp值，也就是移动栈指针这一操作来实现的。</p>
-<p>%rbp是栈帧指针，用于标识当前栈帧的起始位置。也就是当前函数栈的基址。</p>
-<p>%rax用于存储函数调用的返回结果，%eax也是用于存储函数调用返回的结果。它们的区别是%rax存储64位的结果，%eax存储32位的结果。%eax是%rax低位部分。</p>
-<p>要注意，通用目的寄存器的用途可能并不单一。</p>
-<p>指令寄存器：</p>
-<p>%rip指向下一条要执行的指令所存放的地址。cpu不断取出%rip指向的指令，然后执行这条指令，这就是cpu工作的过程。cpu操作每条指令的处理流程大概分为：取指、译码、执行、访存、写回等几步。%rip就是程序计数器在x86-64上的实现。</p>
-<p>同时，区分两个基本概念，“调用者保存”与“被调用者保存”。”调用者保存寄存器“是指在进行子过程的调用之前，调用者负责先将该寄存器的值保存下来。”被调用者保存寄存器“是指在进行子过程的调用之前，调用者无需先将该寄存器的值保存下来，保证该寄存器内容在调用前后不发生改变这一任务交由被调用者完成，这样一来，在调用子过程后，子过程如果打算覆盖”被调用者保存寄存器“中的内容，那么它必须事先将该寄存器的内容保存下来。具体的保存原始值的方式是，将原始值压入栈中，改变寄存器的值，然后在返回前从栈中弹出旧值。”调用者保存“概念类似。</p>
+        <p>用联合存放一个int型变量，将此变量读作char类型数组，或者用强制类型转换将int型指针转换为char指针，然后访问此char数组的低位与高位。</p>
+<p><img src="/2023/03/07/%E5%A4%A7%E5%B0%8F%E7%AB%AF%E5%88%A4%E6%96%AD%E4%BB%A5%E5%8F%8A%E6%95%B0%E6%8D%AE%E5%AF%B9%E9%BD%90/demo.png" alt="图片" title="用联合判断机器大小端"></p>
+<p>如图所示，判断此char数组的第一个元素是对应int型的第一个字节还是最后一个字节，从而判断机器是大端还是小端。继续厘清一下为什么通过这样的方式可以判断机器的大小端属性，在机器内存中分配数组，无论此机器是大端还是小端，数组都是顺着栈的方向向下生长的。大小端的区别体现在，数据的存储顺序(与数组的生长方向区分)与栈生长的顺序相同还是相反。</p>
+<p>举个例子，数组就是幼儿园放学排成一列过马路的小朋友，每个小朋友就是数组的元素，如果是班主任带着一号学生，一号学生带着二号学生，二号学生带着三号学生向前走，这就是大端；如果是三号学生带着二号学生，二号学生带着一号学生，一号学生带着班主任向前走，这就是小端。但无论大小端，都是在往前走。并且注意，此处每个学生或老师代表一个字节，也就是说存储顺序的粒度是1 byte &#x3D; 8 bits。</p>
+<p>数据对齐的意义在于简化处理器与内存系统之间接口的硬件设计，同时降低内存访问的次数，提高效率。即使数据没有对齐，x86-64也能正常工作。</p>
 
       
     </div>
@@ -329,8 +328,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2023/03/05/2023%E6%98%A5PAT%E5%8F%82%E8%B5%9B%E8%AE%B0%E5%BD%95/" rel="next" title="2023春季攀拓计算机能力测评甲级参赛记录">
-                <i class="fa fa-chevron-left"></i> 2023春季攀拓计算机能力测评甲级参赛记录
+              <a href="/2023/03/06/%E6%9C%BA%E5%99%A8%E7%BA%A7%E6%8F%8F%E8%BF%B0%E8%BF%87%E7%A8%8B%E8%B0%83%E7%94%A8/" rel="next" title="机器级描述过程调用">
+                <i class="fa fa-chevron-left"></i> 机器级描述过程调用
               </a>
             
           </div>
@@ -338,10 +337,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2023/03/06/%E6%9D%A1%E4%BB%B6%E8%B7%B3%E8%BD%AC%E4%B8%8E%E6%9D%A1%E4%BB%B6%E4%BC%A0%E9%80%81/" rel="prev" title="条件跳转与条件传送">
-                条件跳转与条件传送 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
