@@ -41,10 +41,9 @@ quoteInputElement.addEventListener('input', () => {
 async function getRandomQuote() {
   // const response = await fetch(RANDOM_QUOTE_API_URL)
   // const data = await response.json()
-  var index = 1001 + Math.floor(Math.random()*559)
-  // const quote = await fetch(quote_url + index.toString() + '.txt')
-  // return quote
-  return "dfsdfsdgsdg"
+  var index = 1001 + Math.floor(Math.random()*2669)
+  const quote = await fetch(quote_url + index.toString() + '.txt')
+  return quote.text()
 }
 
 async function renderNewQuote() {
