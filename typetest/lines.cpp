@@ -4,12 +4,12 @@
 using namespace std;
 #define charNum 100
 int main() {
-    ifstream src("AChristmasCarol.txt", ios::in);
+    ifstream src("out.txt", ios::in);
     string str;
     int i = 1000;
     while (getline(src, str)) {
         if (str.size() > charNum) {
-            string filename = "outs/out";
+            string filename = "out";
             i++;
             filename += to_string(i) + ".txt";
             ofstream dst(filename, ios::out);
