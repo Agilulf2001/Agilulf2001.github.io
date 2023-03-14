@@ -77,15 +77,15 @@
 
 
 
-<meta name="description" content="通用寄存器： %rsp是栈指针，指向栈顶位置。函数的调用或者返回是通过push与pop操作改变%rsp值，也就是移动栈指针这一操作来实现的。 %rbp是帧指针(也叫做基指针)，用于标识当前帧的起始位置。也就是当前函数栈的基址。 %rax用于存储函数调用的返回结果，%eax也是用于存储函数调用返回的结果。它们的区别是%rax存储64位的结果，%eax存储32位的结果。%eax是%rax低位部分。 要">
+<meta name="description" content="假设系统存储器地址共有m&#x3D;32位，形成M&#x3D;2^32个不同地址。 设该机器的高速缓存被组织成一个有S&#x3D;2^s个高速缓存组(cache set)的数组，每个高速缓存组包含E个高速缓存行，每个行是由一个B&#x3D;2^b字节的数据块(block)组成的，一个有效位(valid bit)指明这个行是否包含有效信息，还有t&#x3D;m-(b+s)个标记位(tag bit)，">
 <meta property="og:type" content="article">
-<meta property="og:title" content="x86-64通用目的寄存器简单介绍">
-<meta property="og:url" content="https://agilulf2001.github.io/2023/03/05/x86-64%E5%AF%84%E5%AD%98%E5%99%A8%E6%8C%87%E9%92%88/index.html">
+<meta property="og:title" content="高速缓存映射机制">
+<meta property="og:url" content="https://agilulf2001.github.io/2023/03/08/%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98%E6%98%A0%E5%B0%84%E6%9C%BA%E5%88%B6/index.html">
 <meta property="og:site_name" content="AgiBlog">
-<meta property="og:description" content="通用寄存器： %rsp是栈指针，指向栈顶位置。函数的调用或者返回是通过push与pop操作改变%rsp值，也就是移动栈指针这一操作来实现的。 %rbp是帧指针(也叫做基指针)，用于标识当前帧的起始位置。也就是当前函数栈的基址。 %rax用于存储函数调用的返回结果，%eax也是用于存储函数调用返回的结果。它们的区别是%rax存储64位的结果，%eax存储32位的结果。%eax是%rax低位部分。 要">
+<meta property="og:description" content="假设系统存储器地址共有m&#x3D;32位，形成M&#x3D;2^32个不同地址。 设该机器的高速缓存被组织成一个有S&#x3D;2^s个高速缓存组(cache set)的数组，每个高速缓存组包含E个高速缓存行，每个行是由一个B&#x3D;2^b字节的数据块(block)组成的，一个有效位(valid bit)指明这个行是否包含有效信息，还有t&#x3D;m-(b+s)个标记位(tag bit)，">
 <meta property="og:locale">
-<meta property="article:published_time" content="2023-03-05T15:16:23.000Z">
-<meta property="article:modified_time" content="2023-03-07T11:23:57.682Z">
+<meta property="article:published_time" content="2023-03-08T11:12:47.000Z">
+<meta property="article:modified_time" content="2023-03-08T13:57:52.815Z">
 <meta property="article:author" content="Wang, Juncheng">
 <meta name="twitter:card" content="summary">
 
@@ -117,13 +117,13 @@
 
 
 
-  <link rel="canonical" href="https://agilulf2001.github.io/2023/03/05/x86-64寄存器指针/"/>
+  <link rel="canonical" href="https://agilulf2001.github.io/2023/03/08/高速缓存映射机制/"/>
 
 
 
 
 
-  <title>x86-64通用目的寄存器简单介绍 | AgiBlog</title>
+  <title>高速缓存映射机制 | AgiBlog</title>
   
 
 
@@ -230,7 +230,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://agilulf2001.github.io/2023/03/05/x86-64%E5%AF%84%E5%AD%98%E5%99%A8%E6%8C%87%E9%92%88/">
+    <link itemprop="mainEntityOfPage" href="https://agilulf2001.github.io/2023/03/08/%E9%AB%98%E9%80%9F%E7%BC%93%E5%AD%98%E6%98%A0%E5%B0%84%E6%9C%BA%E5%88%B6/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="">
@@ -247,7 +247,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">x86-64通用目的寄存器简单介绍</h1>
+          <h1 class="post-title" itemprop="name headline">高速缓存映射机制</h1>
         
 
         <div class="post-meta">
@@ -259,8 +259,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2023-03-05T23:16:23+08:00">
-                2023-03-05
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2023-03-08T19:12:47+08:00">
+                2023-03-08
               </time>
             
 
@@ -297,14 +297,32 @@
       
 
       
-        <p>通用寄存器：</p>
-<p>%rsp是栈指针，指向栈顶位置。函数的调用或者返回是通过push与pop操作改变%rsp值，也就是移动栈指针这一操作来实现的。</p>
-<p>%rbp是帧指针(也叫做基指针)，用于标识当前帧的起始位置。也就是当前函数栈的基址。</p>
-<p>%rax用于存储函数调用的返回结果，%eax也是用于存储函数调用返回的结果。它们的区别是%rax存储64位的结果，%eax存储32位的结果。%eax是%rax低位部分。</p>
-<p>要注意，通用目的寄存器的用途可能并不单一。</p>
-<p>指令寄存器：</p>
-<p>%rip指向下一条要执行的指令所存放的地址。cpu不断取出%rip指向的指令，然后执行这条指令，这就是cpu工作的过程。cpu操作每条指令的处理流程大概分为：取指、译码、执行、访存、写回等几步。%rip就是程序计数器在x86-64上的实现。</p>
-<p>同时，区分两个基本概念，“调用者保存”与“被调用者保存”。”调用者保存寄存器“是指在进行子过程的调用之前，调用者负责先将该寄存器的值保存下来。”被调用者保存寄存器“是指在进行子过程的调用之前，调用者无需先将该寄存器的值保存下来，保证该寄存器内容在调用前后不发生改变这一任务交由被调用者完成，这样一来，在调用子过程后，子过程如果打算覆盖”被调用者保存寄存器“中的内容，那么它必须事先将该寄存器的内容保存下来。具体的保存原始值的方式是，将原始值压入栈中，改变寄存器的值，然后在返回前从栈中弹出旧值。”调用者保存“概念类似。</p>
+        <p>假设系统存储器地址共有m&#x3D;32位，形成M&#x3D;2^32个不同地址。</p>
+<p>设该机器的高速缓存被组织成一个有S&#x3D;2^s个高速缓存组(cache set)的数组，每个高速缓存组包含E个高速缓存行，每个行是由一个B&#x3D;2^b字节的数据块(block)组成的，一个有效位(valid bit)指明这个行是否包含有效信息，还有t&#x3D;m-(b+s)个标记位(tag bit)，标记位是当前块的内存地址的位的一个子集，它们唯一标识存储在这个高速缓存行中的块。</p>
+<p>此处关键在于tag bit，标记位映射了该行所存储的块。</p>
+<p>当CPU执行一条读内存字w的指令，它向L1高速缓存请求这个字，高速缓存确定一个(对内存地址的)请求是否命中，然后抽取出被请求的字的过程，分为3步：</p>
+<p><a href="/r.png" title="xxx">!图片</a></p>
+<pre><code>1) 直接映射高速缓存中的组选
+在这一步中，高速缓存从w的地址中抽取s个组索引位。这些位被解释成一个对应于一个组号的无符号整数。如果把高速缓存看成一个关于组的一维数组，那么这些组索引位就是一个到这个数组的索引。
+
+2) 直接映射高速缓存中的行匹配
+在上一步中选择了某个组i，接下来要确定是否有字w的一个副本存储在组i包含的一个高速缓存行中。如果组中所有行(此例中只有一行)都是有效位未设置或标记不相匹配，那么缓存未命中，否则，缓存命中。
+
+3) 直接映射高速缓存中的字选择
+一旦命中，最后一步确定所需要的字在块中是从哪里开始。
+
+4) 直接映射高速缓存中不命中时的行替换
+如果缓存不命中，那么它需要从存储器层次结构中的下一层取出被请求的块，然后将新的块存储在组索引位指示的组中的一个高速缓存行中。一般而言，如果数组中都是有效高速缓存行，那么必须要驱逐一个现存行。
+
+5) 综合：运行中的直接映射高速缓存
+标记位和索引位连起来唯一地标识了内存中地每个块。
+(此例中)因为有8个内存块，但是只有4个高速缓存组，所以多个块会映射到同一个高速缓存组(也就是它们有相同的组索引)。
+映射到同一个高速缓存祖地块由标记唯一地标识。
+
+6) 直接映射高速缓存中的冲突不命中
+</code></pre>
+<p>有关写的问题：</p>
+<p>假设我们要写一个已经缓存了的字w(写命中，write hit)。在高速缓存更新了它的w副本后，怎么更新w在层次结构中紧接着低一层的副本中？一种简单的方法是直写(write-through)，就是立即将w的高速缓存块写到紧接着的低一层中，此方法缺点在每次写都会引起总线流量。另一种方法，称为写回(write back)，尽可能地推迟更新，只有当替换算法要驱逐这个更新过的块时，才把它写到紧接着的第一层中，此方法要求高速缓存必须为每个高速缓存行维护一个额外的修改位(dirty bit)，表明这个高速缓存块是否被修改过。处理写不命中的两种方法，一种称为写分配(write-allocate)，加载相应的低一层中的块到高速缓存中，然后更新这个高速缓存块。写分配试图利用写的空间局部性，写回高速缓存通常是写分配的。另一种方法称为非写分配(not-write-allocate)，避开高速缓存，直接将这个字写到低一层中。直写高速缓存通常是非写分配的。</p>
 
       
     </div>
@@ -329,8 +347,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2023/03/05/2023%E6%98%A5PAT%E5%8F%82%E8%B5%9B%E8%AE%B0%E5%BD%95/" rel="next" title="2023春季攀拓计算机能力测评甲级参赛记录">
-                <i class="fa fa-chevron-left"></i> 2023春季攀拓计算机能力测评甲级参赛记录
+              <a href="/2023/03/08/I-O%E6%A8%A1%E5%9E%8B/" rel="next" title="I/O模型">
+                <i class="fa fa-chevron-left"></i> I/O模型
               </a>
             
           </div>
@@ -339,8 +357,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2023/03/06/%E6%9D%A1%E4%BB%B6%E8%B7%B3%E8%BD%AC%E4%B8%8E%E6%9D%A1%E4%BB%B6%E4%BC%A0%E9%80%81/" rel="prev" title="条件跳转与条件传送">
-                条件跳转与条件传送 <i class="fa fa-chevron-right"></i>
+              <a href="/2023/03/09/%E9%93%BE%E6%8E%A5/" rel="prev" title="链接过程">
+                链接过程 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
