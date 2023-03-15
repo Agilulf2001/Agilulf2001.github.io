@@ -6,8 +6,8 @@ const speedElement = document.getElementById('speed')
 const pauseElement = document.getElementById('pause')
 
 var cnt = 0, sum = 0, tmp = 0, startTime = 0, stopTime = 0, dur = 0, lock = 0
-quoteInputElement.addEventListener('keypress', startTimer)
-quoteInputElement.addEventListener('keypress', () => {
+quoteInputElement.addEventListener('keyup', startTimer)
+quoteInputElement.addEventListener('keyup', () => {
   if (lock == 1) pause()
   const arrayQuote = quoteDisplayElement.querySelectorAll('span')
   const arrayValue = quoteInputElement.value.split('')
@@ -57,7 +57,7 @@ async function renderNewQuote() {
 
 function startTimer() {
   startTime = new Date()
-  quoteInputElement.removeEventListener('keypress', startTimer)
+  quoteInputElement.removeEventListener('keyup', startTimer)
   pauseElement.addEventListener('mouseup', pause)
   timerElement.innerText = "0s"
   speed.innerText = "0\twpm"
