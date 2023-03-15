@@ -1,4 +1,3 @@
-// const RANDOM_QUOTE_API_URL = 'http://api.quotable.io/random'
 const quote_url = 'https://agilulf2001.github.io/typetest/out/out'
 const quoteDisplayElement = document.getElementById('quoteDisplay')
 const quoteInputElement = document.getElementById('quoteInput')
@@ -7,8 +6,8 @@ const speedElement = document.getElementById('speed')
 const pauseElement = document.getElementById('pause')
 
 var cnt = 0, sum = 0, tmp = 0, startTime = 0, stopTime = 0, dur = 0, lock = 0
-quoteInputElement.addEventListener('input', startTimer)
-quoteInputElement.addEventListener('input', () => {
+quoteInputElement.addEventListener('keypress', startTimer)
+quoteInputElement.addEventListener('keypress', () => {
   if (lock == 1) pause()
   const arrayQuote = quoteDisplayElement.querySelectorAll('span')
   const arrayValue = quoteInputElement.value.split('')
@@ -39,8 +38,6 @@ quoteInputElement.addEventListener('input', () => {
 })
 
 async function getRandomQuote() {
-  // const response = await fetch(RANDOM_QUOTE_API_URL)
-  // const data = await response.json()
   var index = 1001 + Math.floor(Math.random()*2669)
   const quote = await fetch(quote_url + index.toString() + '.txt')
   return quote.text()
@@ -60,7 +57,7 @@ async function renderNewQuote() {
 
 function startTimer() {
   startTime = new Date()
-  quoteInputElement.removeEventListener('input', startTimer)
+  quoteInputElement.removeEventListener('keypress', startTimer)
   pauseElement.addEventListener('mouseup', pause)
   timerElement.innerText = "0s"
   speed.innerText = "0\twpm"
@@ -74,9 +71,14 @@ function startTimer() {
 }
 
 function pause() {
-  lock = (lock+1)%2
-  if (lock == 1) dur += (new Date() - startTime)
-  if (lock == 0) startTime = new Date()
+  lock = 1-lock
+  if (lock == 1) {
+    dur += (new Date() - startTime)
+    pauseElement.style.color = "#0faded"
+  } else {
+    startTime = new Date()
+    pauseElement.style.color = "#f0db4f"
+  }
 }
 
 renderNewQuote()
